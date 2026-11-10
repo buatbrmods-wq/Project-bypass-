@@ -1,8 +1,14 @@
 {
-  "name": "bypass-proxy",
+  "name": "bypaslink-workers",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy"
+  },
   "dependencies": {
-    "@vercel/kv": "^3.0.0"
+    "@upstash/redis": "^1.34.0"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
   }
 }

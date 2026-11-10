@@ -1,25 +1,47 @@
 // api/users.js
-import { kv } from '@vercel/kv';
+// Log user terakhir yang masuk (Cloudflare Workers)
 
-const ADMIN_KEY_1 = process.env.ADMIN_KEY_1;
-const ADMIN_KEY_2 = process.env.ADMIN_KEY_2;
+import { Redis } from '@upstash/redis/cloudflare';
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+export default async (request, env, ctx) => {
+  // Setup CORS
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
 
-  const { action, device, key1, key2 } = req.query;
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: cors });
+  }
 
+  // Inisialisasi Database
+  let redis;
+  try {
+    redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Redis config error' }), { status: 500, headers: cors });
+  }
+
+  // Ambil parameter URL
+  const url = new URL(request.url);
+  const action = url.searchParams.get('action');
+  const device = url.searchParams.get('device');
+  const key1 = url.searchParams.get('key1');
+  const key2 = url.searchParams.get('key2');
+
+  // ==========================================
+  // MODE LOG (User Masuk)
+  // ==========================================
   if (action === 'log') {
     try {
-      const ua = req.headers['user-agent'] || '';
-      const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
-              || req.headers['x-real-ip']
+      const ua = request.headers.get('user-agent') || '';
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+              || request.headers.get('x-real-ip')
               || 'unknown';
 
-      const rawLogs = await kv.lrange('user_logs', 0, -1) || [];
+      const rawLogs = await redis.lrange('user_logs', 0, -1) || [];
       let logs = [];
       for (const raw of rawLogs) {
         try { logs.push(typeof raw === 'string' ? JSON.parse(raw) : raw); } catch (e) {}
@@ -45,24 +67,27 @@ export default async function handler(req, res) {
       }
 
       logs = logs.slice(0, 50);
-      await kv.del('user_logs');
+      await redis.del('user_logs');
       if (logs.length > 0) {
-        await kv.lpush('user_logs', ...logs.map(l => JSON.stringify(l)));
-        await kv.ltrim('user_logs', 0, 49);
+        await redis.lpush('user_logs', ...logs.map(l => JSON.stringify(l)));
+        await redis.ltrim('user_logs', 0, 49);
       }
 
-      return res.status(200).json({ success: true });
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: cors });
     } catch (e) {
-      return res.status(500).json({ success: false, error: e.message });
+      return new Response(JSON.stringify({ success: false, error: e.message }), { status: 500, headers: cors });
     }
   }
 
-  if (key1 !== ADMIN_KEY_1 || key2 !== ADMIN_KEY_2) {
-    return res.status(403).json({ error: 'Forbidden' });
+  // ==========================================
+  // MODE ADMIN (Ambil Daftar User)
+  // ==========================================
+  if (key1 !== env.ADMIN_KEY_1 || key2 !== env.ADMIN_KEY_2) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: cors });
   }
 
   try {
-    const rawLogs = await kv.lrange('user_logs', 0, 49) || [];
+    const rawLogs = await redis.lrange('user_logs', 0, 49) || [];
     const logs = [];
     for (const raw of rawLogs) {
       try { logs.push(typeof raw === 'string' ? JSON.parse(raw) : raw); } catch (e) {}
@@ -70,12 +95,12 @@ export default async function handler(req, res) {
 
     const uniqueIPs = new Set(logs.map(l => l.ip));
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       total: logs.length,
       uniqueIPs: uniqueIPs.size,
       logs: logs
-    });
+    }), { status: 200, headers: cors });
   } catch (e) {
-    return res.status(500).json({ error: e.message, logs: [] });
+    return new Response(JSON.stringify({ error: e.message, logs: [] }), { status: 500, headers: cors });
   }
-}
+};

@@ -1,11 +1,18 @@
 // api/welcome.js
-// Pesan welcome + TikTok — edit langsung di sini
+// Pesan welcome + TikTok — edit langsung di sini (Cloudflare Workers)
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+export default async (request, env, ctx) => {
+  // Setup CORS
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: cors });
+  }
 
   // ==========================================
   // EDIT PESAN DI SINI
@@ -20,9 +27,9 @@ Semoga harimu menyenangkan! 🔥`;
   const ACTIVE = true;  // ← ubah ke false kalau mau matikan
   // ==========================================
 
-  return res.status(200).json({
+  return new Response(JSON.stringify({
     active: ACTIVE,
     message: WELCOME_MESSAGE,
     tiktok_url: TIKTOK_URL
-  });
-}
+  }), { status: 200, headers: cors });
+};

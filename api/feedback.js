@@ -1,27 +1,45 @@
 // api/feedback.js
-// Menyimpan dan membaca feedback dari user
+// Menyimpan dan membaca feedback dari user (Cloudflare Workers)
 
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis/cloudflare';
 
-const ADMIN_KEY_1 = process.env.ADMIN_KEY_1;
-const ADMIN_KEY_2 = process.env.ADMIN_KEY_2;
+export default async (request, env, ctx) => {
+  // Setup CORS
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: cors });
+  }
 
-  const { action, message, name, key1, key2 } = req.query;
+  // Inisialisasi Database
+  let redis;
+  try {
+    redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Redis config error' }), { status: 500, headers: cors });
+  }
+
+  // Ambil parameter URL
+  const url = new URL(request.url);
+  const action = url.searchParams.get('action');
+  const message = url.searchParams.get('message');
+  const name = url.searchParams.get('name');
+  const key1 = url.searchParams.get('key1');
+  const key2 = url.searchParams.get('key2');
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
 
   // ==========================================
   // MODE KIRIM FEEDBACK (Publik)
   // ==========================================
   if (action === 'send') {
-    if (!message) return res.status(400).json({ error: 'Pesan tidak boleh kosong' });
+    if (!message) return new Response(JSON.stringify({ error: 'Pesan tidak boleh kosong' }), { status: 400, headers: cors });
     
     try {
-      const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
       const newFeedback = {
         id: String(Date.now()),
         time: new Date().toISOString(),
@@ -30,41 +48,41 @@ export default async function handler(req, res) {
         ip: ip
       };
 
-      await kv.lpush('user_feedback', JSON.stringify(newFeedback));
-      await kv.ltrim('user_feedback', 0, 99); // Simpan maks 100 feedback
+      await redis.lpush('user_feedback', JSON.stringify(newFeedback));
+      await redis.ltrim('user_feedback', 0, 99);
 
-      return res.status(200).json({ success: true, message: 'Feedback terkirim' });
+      return new Response(JSON.stringify({ success: true, message: 'Feedback terkirim' }), { status: 200, headers: cors });
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: cors });
     }
   }
 
   // ==========================================
-  // MODE LIHAT FEEDBACK (Admin)
+  // VALIDASI ADMIN UNTUK AKSI SELANJUTNYA
   // ==========================================
-  if (key1 !== ADMIN_KEY_1 || key2 !== ADMIN_KEY_2) {
-    return res.status(403).json({ error: 'Forbidden' });
+  if (key1 !== env.ADMIN_KEY_1 || key2 !== env.ADMIN_KEY_2) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: cors });
   }
 
   // Mode Hapus
   if (action === 'clear') {
     try {
-      await kv.del('user_feedback');
-      return res.status(200).json({ success: true, message: 'Semua feedback dihapus' });
+      await redis.del('user_feedback');
+      return new Response(JSON.stringify({ success: true, message: 'Semua feedback dihapus' }), { status: 200, headers: cors });
     } catch (e) {
-      return res.status(500).json({ error: e.message });
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: cors });
     }
   }
 
   // Mode Ambil Data
   try {
-    const rawData = await kv.lrange('user_feedback', 0, 99) || [];
+    const rawData = await redis.lrange('user_feedback', 0, 99) || [];
     const feedbacks = [];
     for (const raw of rawData) {
       try { feedbacks.push(typeof raw === 'string' ? JSON.parse(raw) : raw); } catch (e) {}
     }
-    return res.status(200).json({ total: feedbacks.length, feedbacks });
+    return new Response(JSON.stringify({ total: feedbacks.length, feedbacks }), { status: 200, headers: cors });
   } catch (e) {
-    return res.status(500).json({ error: e.message, feedbacks: [] });
+    return new Response(JSON.stringify({ error: e.message, feedbacks: [] }), { status: 500, headers: cors });
   }
-}
+};

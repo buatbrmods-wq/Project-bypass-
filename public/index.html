@@ -1362,7 +1362,7 @@ toast("Bypass berhasil");
 // INFO APLIKASI (WEB UTAMA)
 // ==========================================
 const INFO_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink.vercel.app/api/info'
+  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/info'
   : '/api/info';
 
 async function loadInfoPage() {
@@ -1623,7 +1623,7 @@ renderPersonalStats();
 // KONTAK ADMIN — Ambil dari API
 // ==========================================
 const CONTACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink.vercel.app/api/contact'
+  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/contact'
   : '/api/contact';
 
 async function cekKontak() {
@@ -1720,7 +1720,7 @@ function switchPage(pageName, el) {
 // LOG USER MASUK (Hanya jalan kalau bukan bot/admin)
 // ==========================================
 const USERS_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink.vercel.app/api/users'
+  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/users'
   : '/api/users';
 
 function detectDevice() {
@@ -1851,7 +1851,7 @@ function hapusSemuaRiwayat() {
 // WELCOME MESSAGE
 // ==========================================
 const WELCOME_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink.vercel.app/api/welcome'
+  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/welcome'
   : '/api/welcome';
 
 async function cekWelcome() {
@@ -1892,7 +1892,7 @@ function tutupWelcome() {
 // FEEDBACK
 // ==========================================
 const FEEDBACK_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink.vercel.app/api/feedback'
+  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/feedback'
   : '/api/feedback';
 
 async function kirimFeedback() {

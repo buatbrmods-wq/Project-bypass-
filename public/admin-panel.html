@@ -514,8 +514,9 @@ button:active { transform: scale(.98); }
 </div>
 
 <script>
-const MAINT_API = '/api/maintenance';
-const SERVICES_API = '/api/services';
+const API_BASE = 'https://bypaslink-api.faridibnu050113.workers.dev';
+const MAINT_API = API_BASE + '/api/maintenance';
+const SERVICES_API = API_BASE + '/api/services';
 const $ = id => document.getElementById(id);
 
 // ==========================================
@@ -781,8 +782,7 @@ async function kirimBroadcast() {
   if (!message) return showStatus('⚠️ Pesan tidak boleh kosong!', 'error');
 
   try {
-    const res = await fetch(
-      '/api/broadcast?action=set' +
+    const res = await fetch(API_BASE + '/api/broadcast?action=set' +
       '&message=' + encodeURIComponent(message) +
       '&type=' + encodeURIComponent(type) +
       '&key1=' + encodeURIComponent(key1) +
@@ -807,8 +807,7 @@ async function matikanBroadcast() {
   if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
 
   try {
-    const res = await fetch(
-      '/api/broadcast?action=off' +
+    const res = await fetch(API_BASE + '/api/broadcast?action=off' +
       '&key1=' + encodeURIComponent(key1) +
       '&key2=' + encodeURIComponent(key2),
       { cache: 'no-store' }
@@ -830,8 +829,7 @@ async function loadStats() {
   box.innerHTML = '<div style="color:#8d91a2;text-align:center;padding:20px;">⏳ Memuat...</div>';
 
   try {
-    const res = await fetch(
-      '/api/stats?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2),
+    const res = await fetch(API_BASE + '/api/stats?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2),
       { cache: 'no-store' }
     );
     const data = await res.json();
@@ -907,8 +905,7 @@ async function loadHealth() {
   box.innerHTML = '<div style="color:#8d91a2;text-align:center;padding:20px;">⏳ Mengecek server...</div>';
 
   try {
-    const res = await fetch(
-      '/api/health?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2),
+    const res = await fetch(API_BASE + '/api/health?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2),
       { cache: 'no-store' }
     );
     const data = await res.json();
@@ -946,7 +943,7 @@ async function loadHealth() {
     });
 
     try {
-      const mRes = await fetch('/api/maintenance', { cache: 'no-store' });
+const mRes = await fetch(API_BASE + '/api/maintenance', { cache: 'no-store' });
       const mData = await mRes.json();
       html += `
         <div style="background:#1b1e2a;border-radius:10px;padding:12px;margin-top:10px;font-size:12px;text-align:left;">
@@ -980,8 +977,7 @@ async function simpanContact() {
   if (!wa && !tg) return showStatus('⚠️ Isi minimal 1 kontak!', 'error');
 
   try {
-    const res = await fetch(
-      '/api/contact?action=set' +
+    const res = await fetch(API_BASE + '/api/contact?action=set' +
       '&wa=' + encodeURIComponent(wa) +
       '&telegram=' + encodeURIComponent(tg) +
       '&key1=' + encodeURIComponent(key1) +
@@ -1002,8 +998,7 @@ async function hapusContact() {
   if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
 
   try {
-    const res = await fetch(
-      '/api/contact?action=off' +
+    const res = await fetch(API_BASE + '/api/contact?action=off' +
       '&key1=' + encodeURIComponent(key1) +
       '&key2=' + encodeURIComponent(key2),
       { cache: 'no-store' }
@@ -1019,7 +1014,7 @@ async function hapusContact() {
 
 async function loadContact() {
   try {
-    const res = await fetch('/api/contact', { cache: 'no-store' });
+    const res = await fetch(API_BASE + '/api/contact', { cache: 'no-store' });
     const data = await res.json();
     if (data.wa) $('contactWa').value = data.wa;
     if (data.telegram) $('contactTg').value = data.telegram;
@@ -1041,8 +1036,7 @@ async function simpanInfo() {
   showStatus('⏳ Menyimpan info...', 'warn');
 
   try {
-    const res = await fetch(
-      '/api/info?action=set' +
+    const res = await fetch(API_BASE + '/api/info?action=set' +
       '&title=' + encodeURIComponent(title || 'Tentang Aplikasi') +
       '&content=' + encodeURIComponent(content) +
       '&key1=' + encodeURIComponent(key1) +
@@ -1063,7 +1057,7 @@ async function simpanInfo() {
 
 async function loadInfoAdmin() {
   try {
-    const res = await fetch('/api/info', { cache: 'no-store' });
+    const res = await fetch(API_BASE + '/api/info', { cache: 'no-store' });
     const data = await res.json();
     if (data.title) $('infoTitle').value = data.title;
     if (data.content) $('infoContent').value = data.content;
@@ -1090,8 +1084,7 @@ async function konfirmasiPanic(action) {
   showStatus('⏳ ' + (action === 'on' ? 'Mengaktifkan' : 'Mematikan') + ' panic mode...', 'warn');
 
   try {
-    const res = await fetch(
-      '/api/panic?action=' + action +
+    const res = await fetch(API_BASE + '/api/panic?action=' + action +
       '&key1=' + encodeURIComponent(key1) +
       '&key2=' + encodeURIComponent(key2),
       { cache: 'no-store' }
@@ -1120,7 +1113,7 @@ async function loadUsers() {
   box.innerHTML = '<div style="color:#8d91a2;text-align:center;padding:20px;">⏳ Memuat user...</div>';
 
   try {
-    const res = await fetch('/api/users?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
+    const res = await fetch(API_BASE + '/api/users?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
     const data = await res.json();
 
     if (!res.ok) {
@@ -1175,7 +1168,7 @@ async function loadFeedbackAdmin() {
   box.innerHTML = '<div style="color:#8d91a2;text-align:center;padding:20px;">⏳ Memuat feedback...</div>';
 
   try {
-    const res = await fetch('/api/feedback?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
+    const res = await fetch(API_BASE + '/api/feedback?key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
     const data = await res.json();
 
     if (!res.ok) {
@@ -1218,7 +1211,7 @@ async function hapusSemuaFeedback() {
   if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
 
   try {
-    const res = await fetch('/api/feedback?action=clear&key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
+    const res = await fetch(API_BASE + '/api/feedback?action=clear&key1=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2), { cache: 'no-store' });
     if (res.ok) {
       showStatus('✅ Semua feedback dihapus', 'off');
       loadFeedbackAdmin();
@@ -1239,7 +1232,7 @@ function bukaAplikasi() {
   }
 
   // Buka aplikasi web utama di tab baru dengan membawa kunci dari input
-  const url = '/?admin=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2);
+  const url = 'https://bypass-6tf.pages.dev/?admin=' + encodeURIComponent(key1) + '&key2=' + encodeURIComponent(key2);
   window.open(url, '_blank');
   showStatus('✅ Aplikasi dibuka di tab baru (Mode Admin)', 'off');
 }

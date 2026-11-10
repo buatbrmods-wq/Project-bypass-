@@ -1353,8 +1353,6 @@ toast("Bypass berhasil");
   // ==========================================
 // INFO APLIKASI (WEB UTAMA)
 // ==========================================
-const INFO_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/info';
-
 async function loadInfoPage() {
   try {
     const res = await fetch(INFO_API, { cache: 'no-store' });
@@ -1612,8 +1610,6 @@ renderPersonalStats();
   // ==========================================
 // KONTAK ADMIN — Ambil dari API
 // ==========================================
-const CONTACT_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/contact';
-
 async function cekKontak() {
   const section = document.getElementById('contactSection');
   const btns = document.getElementById('contactBtns');
@@ -1707,8 +1703,6 @@ function switchPage(pageName, el) {
   // ==========================================
 // LOG USER MASUK (Hanya jalan kalau bukan bot/admin)
 // ==========================================
-const USERS_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/users';
-
 function detectDevice() {
   const ua = navigator.userAgent;
   if (/android/i.test(ua)) return /mobile/i.test(ua) ? 'Android Phone' : 'Android Tablet';
@@ -1836,8 +1830,6 @@ function hapusSemuaRiwayat() {
 // ==========================================
 // WELCOME MESSAGE
 // ==========================================
-const WELCOME_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/welcome'
-
 async function cekWelcome() {
   // PENGAMAN 1: Jangan tampilkan welcome jika sedang di halaman admin
   if (isAdminMode) return;
@@ -1875,8 +1867,6 @@ function tutupWelcome() {
   // ==========================================
 // FEEDBACK
 // ==========================================
-const FEEDBACK_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/feedback'
-
 async function kirimFeedback() {
   const name = document.getElementById('fbName').value.trim();
   const message = document.getElementById('fbMessage').value.trim();

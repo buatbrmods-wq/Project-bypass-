@@ -1,17 +1,14 @@
 // api/health.js
-// Health check + auto-maintenance — HEMAT KV
+// Health check + auto-maintenance — HEMAT KV (Cloudflare Workers)
 
-import { kv } from '@vercel/kv';
-
-const ADMIN_KEY_1 = process.env.ADMIN_KEY_1;
-const ADMIN_KEY_2 = process.env.ADMIN_KEY_2;
+import { Redis } from '@upstash/redis/cloudflare';
 
 // ==========================================
 // CEK SEMUA SERVER
 // ==========================================
-async function cekSemuaServer() {
+async function cekSemuaServer(redis, env) {
   const results = {
-    vercel: { status: 'online', time: 1, message: 'Vercel API berjalan normal' },
+    vercel: { status: 'online', time: 1, message: 'API Cloudflare berjalan normal' },
     upstash: { status: 'checking', time: 0, message: '' },
     theresav: { status: 'checking', time: 0, message: '' }
   };
@@ -19,7 +16,7 @@ async function cekSemuaServer() {
   // 1. Cek Upstash — pakai GET saja (hemat)
   const kvStart = Date.now();
   try {
-    const val = await kv.get('health_heartbeat');
+    const val = await redis.get('health_heartbeat');
     results.upstash.status = 'online';
     results.upstash.time = Date.now() - kvStart;
     results.upstash.message = 'Upstash KV berjalan normal';
@@ -34,7 +31,7 @@ async function cekSemuaServer() {
   try {
     const response = await fetch('https://api.theresav.eu/api/bypass/move2link?url=https://move2link.co/b4264b4', {
       method: 'GET',
-      headers: { 'x-apikey': 'SQ7Dw' }
+      headers: { 'x-apikey': env.THERESAV_API_KEY }
     });
     const elapsed = Date.now() - tStart;
 
@@ -64,8 +61,8 @@ async function cekSemuaServer() {
 // ==========================================
 // AUTO-MAINTENANCE — HEMAT KV
 // ==========================================
-async function autoMaintenanceCheck() {
-  const results = await cekSemuaServer();
+async function autoMaintenanceCheck(redis, env) {
+  const results = await cekSemuaServer(redis, env);
 
   const adaOffline = Object.values(results).some(s => s.status === 'offline');
   const semuaNormal = Object.values(results).every(s => s.status === 'online');
@@ -73,7 +70,7 @@ async function autoMaintenanceCheck() {
   // Baca status terakhir (1 perintah)
   let state = {};
   try {
-    state = await kv.get('health_state') || {};
+    state = await redis.get('health_state') || {};
   } catch (e) {
     state = {};
   }
@@ -86,11 +83,11 @@ async function autoMaintenanceCheck() {
 
   // Kalau ada server offline & maintenance belum ON
   if (adaOffline && !maintenanceSekarang) {
-    await kv.set('maintenance', 'on');
-    await kv.set('auto_maintenance_active', 'on');
-    await kv.set('broadcast_message', '⚠️ Server bermasalah. Maintenance otomatis aktif.');
-    await kv.set('broadcast_type', 'warning');
-    await kv.set('broadcast_active', 'on');
+    await redis.set('maintenance', 'on');
+    await redis.set('auto_maintenance_active', 'on');
+    await redis.set('broadcast_message', '⚠️ Server bermasalah. Maintenance otomatis aktif.');
+    await redis.set('broadcast_type', 'warning');
+    await redis.set('broadcast_active', 'on');
     aksi = 'maintenance ON (auto)';
     state.maintenance = true;
     state.auto_active = true;
@@ -98,9 +95,9 @@ async function autoMaintenanceCheck() {
   }
   // Kalau semua normal & auto-maintenance aktif
   else if (semuaNormal && autoActive) {
-    await kv.set('maintenance', 'off');
-    await kv.set('auto_maintenance_active', 'off');
-    await kv.set('broadcast_active', 'off');
+    await redis.set('maintenance', 'off');
+    await redis.set('auto_maintenance_active', 'off');
+    await redis.set('broadcast_active', 'off');
     aksi = 'maintenance OFF (auto)';
     state.maintenance = false;
     state.auto_active = false;
@@ -110,7 +107,7 @@ async function autoMaintenanceCheck() {
   // Simpan state — 1 perintah (hanya kalau berubah)
   if (needSave) {
     state.updated_at = new Date().toISOString();
-    await kv.set('health_state', state);
+    await redis.set('health_state', state);
   }
 
   return { results, aksi };
@@ -119,42 +116,56 @@ async function autoMaintenanceCheck() {
 // ==========================================
 // HANDLER
 // ==========================================
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+export default async (request, env, ctx) => {
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
 
-  const { key1, key2, auto } = req.query;
+  if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+
+  let redis;
+  try {
+    redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Redis config error' }), { status: 500, headers: cors });
+  }
+
+  const url = new URL(request.url);
+  const key1 = url.searchParams.get('key1');
+  const key2 = url.searchParams.get('key2');
+  const auto = url.searchParams.get('auto');
 
   // ==========================================
   // MODE AUTO (dipanggil cron-job.org)
   // ==========================================
   if (auto === '1') {
     try {
-      const { results, aksi } = await autoMaintenanceCheck();
-      return res.status(200).json({
+      const { results, aksi } = await autoMaintenanceCheck(redis, env);
+      return new Response(JSON.stringify({
         timestamp: new Date().toISOString(),
         auto: true,
         aksi: aksi,
         results: results
-      });
+      }), { status: 200, headers: cors });
     } catch (err) {
-      return res.status(500).json({ auto: true, error: err.message });
+      return new Response(JSON.stringify({ auto: true, error: err.message }), { status: 500, headers: cors });
     }
   }
 
   // ==========================================
   // MODE MANUAL (dari admin panel)
   // ==========================================
-  if (key1 !== ADMIN_KEY_1 || key2 !== ADMIN_KEY_2) {
-    return res.status(403).json({ error: 'Forbidden' });
+  if (key1 !== env.ADMIN_KEY_1 || key2 !== env.ADMIN_KEY_2) {
+    return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: cors });
   }
 
-  const results = await cekSemuaServer();
-  return res.status(200).json({
+  const results = await cekSemuaServer(redis, env);
+  return new Response(JSON.stringify({
     timestamp: new Date().toISOString(),
     auto: false,
     results: results
-  });
-      }
+  }), { status: 200, headers: cors });
+};

@@ -1353,9 +1353,7 @@ toast("Bypass berhasil");
   // ==========================================
 // INFO APLIKASI (WEB UTAMA)
 // ==========================================
-const INFO_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/info'
-  : '/api/info';
+const INFO_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/info';
 
 async function loadInfoPage() {
   try {
@@ -1614,9 +1612,7 @@ renderPersonalStats();
   // ==========================================
 // KONTAK ADMIN — Ambil dari API
 // ==========================================
-const CONTACT_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/contact'
-  : '/api/contact';
+const CONTACT_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/contact';
 
 async function cekKontak() {
   const section = document.getElementById('contactSection');
@@ -1711,9 +1707,7 @@ function switchPage(pageName, el) {
   // ==========================================
 // LOG USER MASUK (Hanya jalan kalau bukan bot/admin)
 // ==========================================
-const USERS_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/users'
-  : '/api/users';
+const USERS_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/users';
 
 function detectDevice() {
   const ua = navigator.userAgent;
@@ -1842,9 +1836,7 @@ function hapusSemuaRiwayat() {
 // ==========================================
 // WELCOME MESSAGE
 // ==========================================
-const WELCOME_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/welcome'
-  : '/api/welcome';
+const WELCOME_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/welcome'
 
 async function cekWelcome() {
   // PENGAMAN 1: Jangan tampilkan welcome jika sedang di halaman admin
@@ -1883,9 +1875,7 @@ function tutupWelcome() {
   // ==========================================
 // FEEDBACK
 // ==========================================
-const FEEDBACK_API = (location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.hostname.includes('github.io'))
-  ? 'https://bypaslink-api.faridibnu050113.workers.dev/api/feedback'
-  : '/api/feedback';
+const FEEDBACK_API = 'https://bypaslink-api.faridibnu050113.workers.dev/api/feedback'
 
 async function kirimFeedback() {
   const name = document.getElementById('fbName').value.trim();

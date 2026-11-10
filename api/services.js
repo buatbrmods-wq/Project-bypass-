@@ -1,71 +1,89 @@
 // api/services.js
-// ON/OFF per service + alasan
+// ON/OFF per service + alasan (Cloudflare Workers)
 
-import { kv } from '@vercel/kv';
-
-// ==========================================
-// KUNCI ADMIN — GANTI kalau perlu
-// ==========================================
-const ADMIN_KEY_1 = process.env.ADMIN_KEY_1;
-const ADMIN_KEY_2 = process.env.ADMIN_KEY_2;
+import { Redis } from '@upstash/redis/cloudflare';
 
 const VALID_SERVICES = ['adlink', 'sfl', 'delta', 'linkvertise', 'move2link', 'sub2unlock', 'sub4unlock', 'universal'];
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') return res.status(204).end();
+export default async (request, env, ctx) => {
+  // Setup CORS
+  const cors = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
 
-  const { action, service, status, reason, key1, key2 } = req.query;
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { headers: cors });
+  }
+
+  // Inisialisasi Database
+  let redis;
+  try {
+    redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Redis config error' }), { status: 500, headers: cors });
+  }
+
+  // Ambil parameter URL
+  const url = new URL(request.url);
+  const action = url.searchParams.get('action');
+  const service = url.searchParams.get('service');
+  const status = url.searchParams.get('status');
+  const reason = url.searchParams.get('reason');
+  const key1 = url.searchParams.get('key1');
+  const key2 = url.searchParams.get('key2');
 
   // ==========================================
   // CEK SEMUA SERVICE (publik)
   // ==========================================
   if (!action) {
-  const result = {};
-  for (const s of VALID_SERVICES) {
-    const st = await kv.get(`service_${s}_status`) || 'on';
-    const rs = await kv.get(`service_${s}_reason`) || '';
-    result[s] = { status: st, reason: rs };
+    const result = {};
+    for (const s of VALID_SERVICES) {
+      const st = await redis.get(`service_${s}_status`) || 'on';
+      const rs = await redis.get(`service_${s}_reason`) || '';
+      result[s] = { status: st, reason: rs };
+    }
+    return new Response(JSON.stringify({ services: result }), { status: 200, headers: cors });
   }
-  return res.status(200).json({ services: result });
-}
 
-// Mode admin — cek apakah user ini admin
-if (action === 'adminView') {
-  if (key1 !== ADMIN_KEY_1 || key2 !== ADMIN_KEY_2) {
-    return res.status(403).json({ isAdmin: false });
+  // ==========================================
+  // MODE ADMIN VIEW
+  // ==========================================
+  if (action === 'adminView') {
+    if (key1 !== env.ADMIN_KEY_1 || key2 !== env.ADMIN_KEY_2) {
+      return new Response(JSON.stringify({ isAdmin: false }), { status: 403, headers: cors });
+    }
+    return new Response(JSON.stringify({ isAdmin: true }), { status: 200, headers: cors });
   }
-  return res.status(200).json({ isAdmin: true });
-}
 
   // ==========================================
   // UBAH STATUS SERVICE (butuh 2 kunci)
   // ==========================================
   if (action === 'set') {
-    if (key1 !== ADMIN_KEY_1 || key2 !== ADMIN_KEY_2) {
-      return res.status(403).json({ error: 'Forbidden' });
+    if (key1 !== env.ADMIN_KEY_1 || key2 !== env.ADMIN_KEY_2) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: cors });
     }
     if (!VALID_SERVICES.includes(service)) {
-      return res.status(400).json({ error: 'Service tidak valid' });
+      return new Response(JSON.stringify({ error: 'Service tidak valid' }), { status: 400, headers: cors });
     }
     if (status !== 'on' && status !== 'off') {
-      return res.status(400).json({ error: 'Status harus on atau off' });
+      return new Response(JSON.stringify({ error: 'Status harus on atau off' }), { status: 400, headers: cors });
     }
 
-    await kv.set(`service_${service}_status`, status);
-    await kv.set(`service_${service}_reason`, reason || '');
-    await kv.set(`service_${service}_updated_at`, new Date().toISOString());
+    await redis.set(`service_${service}_status`, status);
+    await redis.set(`service_${service}_reason`, reason || '');
+    await redis.set(`service_${service}_updated_at`, new Date().toISOString());
 
-    return res.status(200).json({
+    return new Response(JSON.stringify({
       success: true,
       service,
       status,
       reason: reason || '',
       message: `Service ${service} -> ${status.toUpperCase()}`
-    });
+    }), { status: 200, headers: cors });
   }
 
-  return res.status(400).json({ error: 'Action tidak dikenal' });
-}
+  return new Response(JSON.stringify({ error: 'Action tidak dikenal' }), { status: 400, headers: cors });
+};

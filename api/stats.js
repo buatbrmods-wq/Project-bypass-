@@ -92,7 +92,7 @@ export default async (request, env, ctx) => {
     },
     last7Days: last7,
     allTime: {
-      total: parseInt(allTotal),
+      total: parseInt(totalAll),
       byService: totalByService,
       topService: topService,
       topCount: topCount

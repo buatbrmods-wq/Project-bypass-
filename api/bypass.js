@@ -4,7 +4,7 @@
 import { Redis } from '@upstash/redis/cloudflare';
 
 const ENDPOINTS = {
-  adlink: 'adlink',
+  adlink: 'adlinksumo',
   sfl: 'sfl',
   delta: 'izen',
   linkvertise: 'linkvertise',

@@ -96,15 +96,34 @@ export default async (request, env, ctx) => {
         // Simpan IP User
         if (ip !== 'unknown') await redis.sadd(`stats_users_${today}`, ip);
 
-        // Notif Telegram
-        const bypassedLink = dataJson.bypassed_url || (dataJson.bypassed_urls && dataJson.bypassed_urls[0]) || dataJson.url || dataJson.result || '-';
-        const msg = `✅ *BYPASS BERHASIL*\n\n📌 *Service:* ${type.toUpperCase()}\n🎯 *Hasil:* ${bypassedLink}\n🌐 *IP:* ${ip}`;
-        await sendTelegram(msg, env);
+        // Notif Telegram (Berhasil)
+const bypassedLink = dataJson.bypassed_url || (dataJson.bypassed_urls && dataJson.bypassed_urls[0]) || dataJson.url || dataJson.result || '-';
+const ua = request.headers.get('user-agent') || 'Unknown';
+const timeNow = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+
+const msg = `✅ *BYPASS BERHASIL*\n\n` +
+            `📌 *Service:* ${type.toUpperCase()}\n` +
+            `🔗 *URL Asli:* ${targetUrl}\n` +
+            `🎯 *URL Hasil:* ${bypassedLink}\n` +
+            `🌐 *IP:* ${ip}\n` +
+            `📱 *Device:* ${ua.substring(0, 50)}...\n` +
+            `⏱️ *Waktu:* ${timeNow}`;
+
+await sendTelegram(msg, env);
 
       } else if (dataJson && dataJson.error) {
-        // Notif Gagal
-        const msg = `⚠️ *BYPASS GAGAL (THERESAV)*\n\n📌 *Service:* ${type.toUpperCase()}\n❌ *Pesan:* ${dataJson.error}\n🌐 *IP:* ${ip}`;
-        await sendTelegram(msg, env);
+        // Notif Telegram (Gagal)
+  const ua = request.headers.get('user-agent') || 'Unknown';
+  const timeNow = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+  
+  const msg = `⚠️ *BYPASS GAGAL (THERESAV)*\n\n` +
+              `📌 *Service:* ${type.toUpperCase()}\n` +
+              `🔗 *URL Asli:* ${targetUrl}\n` +
+              `❌ *Pesan:* ${dataJson.error}\n` +
+              `🌐 *IP:* ${ip}\n` +
+              `📱 *Device:* ${ua.substring(0, 50)}...\n` +
+              `⏱️ *Waktu:* ${timeNow}`;
+  await sendTelegram(msg, env);
       }
     } catch (logErr) {
       console.error('Log error:', logErr);

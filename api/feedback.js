@@ -3,8 +3,23 @@
 
 import { Redis } from '@upstash/redis/cloudflare';
 
+// ==========================================
+// FUNGSI KIRIM PESAN TELEGRAM
+// ==========================================
+async function sendTelegram(text, env) {
+  const tgToken = env.TELEGRAM_TOKEN;
+  const tgChatId = env.TELEGRAM_CHAT_ID;
+  if (!tgToken || !tgChatId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: tgChatId, text: text, parse_mode: 'Markdown' })
+    });
+  } catch (err) {}
+}
+
 export default async (request, env, ctx) => {
-  // Setup CORS
   const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -16,7 +31,6 @@ export default async (request, env, ctx) => {
     return new Response(null, { headers: cors });
   }
 
-  // Inisialisasi Database
   let redis;
   try {
     redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN });
@@ -24,14 +38,15 @@ export default async (request, env, ctx) => {
     return new Response(JSON.stringify({ error: 'Redis config error' }), { status: 500, headers: cors });
   }
 
-  // Ambil parameter URL
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
   const message = url.searchParams.get('message');
   const name = url.searchParams.get('name');
   const key1 = url.searchParams.get('key1');
   const key2 = url.searchParams.get('key2');
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown';
+  const ip = request.headers.get('cf-connecting-ip') || 
+             request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 
+             'unknown';
 
   // ==========================================
   // MODE KIRIM FEEDBACK (Publik)
@@ -51,6 +66,20 @@ export default async (request, env, ctx) => {
       await redis.lpush('user_feedback', JSON.stringify(newFeedback));
       await redis.ltrim('user_feedback', 0, 99);
 
+      // ==========================================
+      // NOTIFIKASI TELEGRAM UNTUK FEEDBACK BARU
+      // ==========================================
+      const ua = request.headers.get('user-agent') || 'Unknown';
+      const timeNow = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+      
+      const msg = `📝 *FEEDBACK BARU MASUK*\n\n` +
+                  `👤 *Nama:* ${name || 'Anonim'}\n` +
+                  `💬 *Pesan:* "${message}"\n` +
+                  `🌐 *IP:* ${ip}\n` +
+                  `📱 *Device:* ${ua.substring(0, 50)}...\n` +
+                  `⏱️ *Waktu:* ${timeNow}`;
+      await sendTelegram(msg, env);
+
       return new Response(JSON.stringify({ success: true, message: 'Feedback terkirim' }), { status: 200, headers: cors });
     } catch (e) {
       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: cors });
@@ -64,7 +93,6 @@ export default async (request, env, ctx) => {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: cors });
   }
 
-  // Mode Hapus
   if (action === 'clear') {
     try {
       await redis.del('user_feedback');
@@ -74,7 +102,6 @@ export default async (request, env, ctx) => {
     }
   }
 
-  // Mode Ambil Data
   try {
     const rawData = await redis.lrange('user_feedback', 0, 99) || [];
     const feedbacks = [];

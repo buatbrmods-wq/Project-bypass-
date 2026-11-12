@@ -132,8 +132,23 @@ await sendTelegram(msg, env);
     return new Response(data, { status: response.status, headers: cors });
 
   } catch (err) {
-    const msg = `🚨 *BYPASS GAGAL (ERROR SYSTEM)*\n\n📌 *Service:* ${type.toUpperCase()}\n❌ *Error:* ${err.message}\n🌐 *IP:* ${ip}`;
-    await sendTelegram(msg, env);
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: cors });
+  // --- GAGAL TOTAL (Server Crash / Timeout) ---
+  const isBadGateway = err.message.includes('502') || err.message.includes('Bad Gateway');
+  
+  // Pesan yang tampil ke user (lebih ramah)
+  const userMessage = isBadGateway 
+    ? "Server Theresav sedang sibuk (502). Silakan coba beberapa saat lagi." 
+    : err.message;
+
+  // Notif Telegram
+  const msg = `🚨 *BYPASS GAGAL (ERROR SYSTEM)*\n\n` +
+              `📌 *Service:* ${type.toUpperCase()}\n` +
+              `🔗 *Link:* ${targetUrl.substring(0, 50)}...\n` +
+              `❌ *Error:* ${err.message}\n` +
+              `🌐 *IP:* ${ip}`;
+  await sendTelegram(msg, env);
+
+  // Balas ke web dengan pesan yang ramah
+  return new Response(JSON.stringify({ error: userMessage }), { status: 500, headers: cors });
   }
-};
+  }

@@ -700,11 +700,6 @@ body.has-broadcast{padding-top:60px}
       <div class="info"><b>LINKVERTISE BYPASS</b><small>Bypass Link • Fast</small></div>
       <div class="arrow">›</div>
     </div>
-    <div class="service" style="--accent:#ff7a00" data-type="move2link">
-      <div class="icon">≡★</div>
-      <div class="info"><b>MOVE2LINK BYPASS</b><small>Bypass Link • Fast</small></div>
-      <div class="arrow">›</div>
-    </div>
       <div class="service" style="--accent:#d400c4" data-type="bicolink">
       <div class="icon">≡★</div>
       <div class="info"><b>BICOLINK BYPASS</b><small>Bypass Link • Fast</small></div>
@@ -1075,7 +1070,7 @@ function cekService(serviceId) {
 
     const names = {
       adlink: 'AdLinkSumo', sfl: 'SFL', delta: 'Delta',
-      linkvertise: 'Linkvertise', move2link: 'Move2link',
+      linkvertise: 'Linkvertise', bicolink: 'Bicolink',
       sub2unlock: 'Sub2Unlock', sub4unlock: 'Sub4Unlock',
       universal: 'Universal'
     };
@@ -1101,7 +1096,6 @@ const ENDPOINTS = {
   sfl: 'sfl',
   delta: 'izen',
   linkvertise: 'linkvertise',
-  move2link: 'move2link',
   bicolink: 'bicolink',
   sub2unlock: 'sub2unlock',
   sub4unlock: 'sub4unlock',
@@ -1113,7 +1107,6 @@ const SERVICE_NAMES = {
   sfl: "SFL Bypass",
   delta: "Delta Bypass",
   linkvertise: "Linkvertise Bypass",
-  move2link: "Move2link Bypass",
   bicolink: "Bicolink Bypass",
   sub2unlock: "Sub2Unlock Bypass",
   sub4unlock: "Sub4Unlock Bypass",
@@ -1125,7 +1118,6 @@ const SERVICE_PLACEHOLDERS = {
   sfl: "Tempel link SFL di sini",
   delta: "Tempel link DeltaBypass di sini",
   linkvertise: "Tempel link Linkvertise di sini",
-  move2link: "Tempel link Move2link di sini",
   bicolink: "Tempel link Bicolink di sini",
   sub2unlock: "Tempel link Sub2Unlock di sini",
   sub4unlock: "Tempel link Sub4Unlock di sini",
@@ -1556,7 +1548,7 @@ function finishProgress(success, text) {
 // ==========================================
 const SERVICE_NAMES_SHORT = {
   adlink: 'AdLinkSumo', sfl: 'SFL', delta: 'Delta',
-  linkvertise: 'Linkvertise', move2link: 'Move2link',
+  linkvertise: 'Linkvertise', bicolink: 'Bicolink',
   sub2unlock: 'Sub2Unlock', sub4unlock: 'Sub4Unlock', universal: 'Universal'
 };
 
@@ -1782,8 +1774,7 @@ function renderHistory() {
 
   const SERVICE_SHORT = {
     adlink: 'AdLinkSumo', sfl: 'SFL', delta: 'Delta',
-    linkvertise: 'Linkvertise', move2link: 'Move2link',
-    sub2unlock: 'Sub2Unlock', sub4unlock: 'Sub4Unlock', bicolink: 'Bicolink', universal: 'Universal'
+    linkvertise: 'Linkvertise', sub2unlock: 'Sub2Unlock', sub4unlock: 'Sub4Unlock', bicolink: 'Bicolink', universal: 'Universal'
   };
 
   let html = '';

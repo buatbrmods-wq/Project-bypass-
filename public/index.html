@@ -1353,7 +1353,7 @@ toast("Bypass berhasil");
       message: err.message,
       stack: err.stack
     });
-    toast(err.message || "Terjadi kesalahan");
+    toast("❌ Gagal: " + (err.message || "Terjadi kesalahan"));
   } finally {
   $("loader").style.display = "none";
   setTimeout(() => {
@@ -1956,6 +1956,36 @@ async function loadUpdates() {
 // Panggil fungsi ini saat halaman update dibuka
 // Cari fungsi switchPage() dan tambahkan pemanggilan ini di dalamnya:
 // if (pageName === 'update') loadUpdates();
+
+  // ==========================================
+// NOTIFIKASI UPDATE BARU
+// ==========================================
+async function cekUpdateBaru() {
+  try {
+    const res = await fetch(VERCEL_BASE + '/api/updates', { cache: 'no-store' });
+    const data = await res.json();
+    const updates = data.updates || [];
+
+    if (updates.length === 0) return;
+
+    // Ambil update terbaru (paling atas)
+    const latestUpdate = updates[0];
+    
+    // Cek apakah user sudah pernah lihat update ini
+    const lastSeenId = localStorage.getItem('sd_last_update_seen');
+
+    if (latestUpdate.id !== lastSeenId) {
+      // Tampilkan Notif Toast
+      toast(`🆕 Update Baru (${latestUpdate.version || 'v1.0.0'}): ${latestUpdate.title}`);
+      
+      // Simpan ID agar tidak muncul terus-terusan
+      localStorage.setItem('sd_last_update_seen', latestUpdate.id);
+    }
+  } catch (err) {}
+}
+
+// Panggil saat web dibuka (setelah 3 detik agar tidak mengganggu loading)
+setTimeout(cekUpdateBaru, 3000);
 
   
 </script>

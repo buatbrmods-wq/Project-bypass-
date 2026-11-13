@@ -12,6 +12,7 @@ import panicHandler from './api/panic.js';
 import usersHandler from './api/users.js';
 import feedbackHandler from './api/feedback.js';
 import healthCheckHandler from './api/health-check.js';
+import updatesHandler from './api/updates.js';
 
 const routes = {
   '/api/bypass': bypassHandler,
@@ -26,6 +27,7 @@ const routes = {
   '/api/panic': panicHandler,
   '/api/users': usersHandler,
   '/api/feedback': feedbackHandler,
+  '/api/updates': updatesHandler,
   '/api/health-check': healthCheckHandler,
 };
 

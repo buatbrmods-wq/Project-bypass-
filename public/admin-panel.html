@@ -462,6 +462,9 @@ button:active { transform: scale(.98); }
 <!-- ========================================== -->
 <div class="tab-content" id="tab-updates">
   <h2 style="font-size:16px;color:#8d91a2;margin-bottom:14px;">🆕 TAMBAH UPDATE</h2>
+
+<label>Versi Web</label>
+<input id="updateVersion" type="text" placeholder="Contoh: v1.0.1" style="margin-bottom:12px;">
   
   <label>Judul Update</label>
   <input id="updateTitle" type="text" placeholder="Contoh: Fitur Baru Bicolink" style="margin-bottom:12px;">
@@ -1268,6 +1271,7 @@ const UPDATES_API = API_BASE + '/api/updates';
 async function simpanUpdate() {
   const key1 = $('key1').value.trim();
   const key2 = $('key2').value.trim();
+  const version = $('updateVersion').value.trim(); // <-- Tambahan
   const title = $('updateTitle').value.trim();
   const content = $('updateContent').value.trim();
 
@@ -1279,6 +1283,7 @@ async function simpanUpdate() {
   try {
     const res = await fetch(
       UPDATES_API + '?action=add' +
+      '&version=' + encodeURIComponent(version || 'v1.0.0') +
       '&title=' + encodeURIComponent(title) +
       '&content=' + encodeURIComponent(content) +
       '&key1=' + encodeURIComponent(key1) +
@@ -1288,6 +1293,7 @@ async function simpanUpdate() {
     const data = await res.json();
     if (res.ok && data.success) {
       showStatus('✅ ' + data.message, 'off');
+      $('updateVersion').value = '';
       $('updateTitle').value = '';
       $('updateContent').value = '';
       loadUpdatesAdmin();
@@ -1322,12 +1328,15 @@ async function loadUpdatesAdmin() {
       const date = new Date(item.time);
       const timeStr = date.toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
       html += `
-        <div class="update-admin-item">
-          <div class="update-admin-title">${item.title}</div>
-          <div class="update-admin-time">🕒 ${timeStr}</div>
-          <div class="update-admin-content">${item.content}</div>
-        </div>
-      `;
+  <div class="update-admin-item">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+      <div class="update-admin-title">${item.title}</div>
+      <span style="font-size:10px; background:#7d43ff; padding:2px 6px; border-radius:10px;">${item.version || 'v1.0.0'}</span>
+    </div>
+    <div class="update-admin-time">🕒 ${timeStr}</div>
+    <div class="update-admin-content">${item.content}</div>
+  </div>
+`;
     });
     box.innerHTML = html;
     showStatus('✅ ' + updates.length + ' update dimuat', 'off');

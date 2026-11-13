@@ -650,6 +650,31 @@ body.has-broadcast{padding-top:60px}
   transition: .15s;
 }
 .welcome-close:active { transform: scale(.98); }
+
+  /* Titik Notifikasi Merah */
+.notif-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  border: 2px solid #181b27; /* Warna border sesuai background tombol */
+  display: none; /* Sembunyikan secara default */
+  z-index: 60;
+}
+
+/* Titik Merah di Menu Drawer */
+.drawer-item .notif-dot-drawer {
+  display: none;
+  width: 8px;
+  height: 8px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  margin-left: auto;
+  margin-right: 8px;
+  }
 </style>
 </head>
 <body>
@@ -665,7 +690,8 @@ body.has-broadcast{padding-top:60px}
 <main class="app">
 
    <!-- TOMBOL MENU HAMBURGER -->
-<button class="menu-btn" onclick="openDrawer()">
+<button class="menu-btn" onclick="openDrawer()" style="position: relative;">
+  <div class="notif-dot" id="notifDotMenu"></div>
   <div>
     <span></span>
     <span></span>

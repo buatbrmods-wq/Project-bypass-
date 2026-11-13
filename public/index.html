@@ -1937,12 +1937,15 @@ async function loadUpdates() {
         hour: '2-digit', minute: '2-digit'
       });
       html += `
-        <div class="info-box" style="margin-bottom:12px;">
-          <h3 style="color:#b45cff; font-size:16px; margin-bottom:6px;">${item.title}</h3>
-          <div class="content" style="font-size:13px; color:#d0d3dd; white-space:pre-wrap; margin-bottom:10px;">${item.content}</div>
-          <div style="font-size:11px; color:#5a5f70; text-align:right;">🕒 ${timeStr}</div>
-        </div>
-      `;
+  <div class="info-box" style="margin-bottom:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <h3 style="color:#b45cff; font-size:16px; margin:0;">${item.title}</h3>
+      <span style="font-size:10px; background:#7d43ff; color:#fff; padding:2px 8px; border-radius:10px;">${item.version || 'v1.0.0'}</span>
+    </div>
+    <div class="content" style="font-size:13px; color:#d0d3dd; white-space:pre-wrap; margin-bottom:10px;">${item.content}</div>
+    <div style="font-size:11px; color:#5a5f70; text-align:right;">🕒 ${timeStr}</div>
+  </div>
+`;
     });
     list.innerHTML = html;
   } catch (err) {

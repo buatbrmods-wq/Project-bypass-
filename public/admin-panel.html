@@ -118,6 +118,18 @@ button:active { transform: scale(.98); }
 .feedback-msg { font-size: 12px; color: #d0d3dd; line-height: 1.5; margin-bottom: 8px; }
 .feedback-ip { font-size: 10px; color: #5a5f70; }
 
+  /* Update */
+  .update-admin-item {
+  background: #1b1e2a;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  border-left: 3px solid #b45cff;
+}
+.update-admin-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.update-admin-time { font-size: 10px; color: #5a5f70; margin-bottom: 6px; }
+.update-admin-content { font-size: 12px; color: #d0d3dd; line-height: 1.5; white-space: pre-wrap; }
+
 /* Collapsible */
 .collapsible-header {
   display: flex;
@@ -446,6 +458,31 @@ button:active { transform: scale(.98); }
 </div>
 
   <!-- ========================================== -->
+<!-- TAB: UPDATE ADMIN -->
+<!-- ========================================== -->
+<div class="tab-content" id="tab-updates">
+  <h2 style="font-size:16px;color:#8d91a2;margin-bottom:14px;">🆕 TAMBAH UPDATE</h2>
+  
+  <label>Judul Update</label>
+  <input id="updateTitle" type="text" placeholder="Contoh: Fitur Baru Bicolink" style="margin-bottom:12px;">
+  
+  <label>Isi Update</label>
+  <textarea id="updateContent" placeholder="Jelaskan detail pembaruannya..." rows="5"></textarea>
+  
+  <button class="btn-apply" onclick="simpanUpdate()" style="background:linear-gradient(135deg,#00c896,#00a07a); margin-bottom:10px;">💾 SIMPAN UPDATE</button>
+  
+  <div class="divider"></div>
+  
+  <h2 style="font-size:16px;color:#8d91a2;margin-bottom:14px;">📋 DAFTAR UPDATE</h2>
+  <button class="btn-check" onclick="loadUpdatesAdmin()">🔄 REFRESH DAFTAR</button>
+  <button class="btn-check" onclick="hapusSemuaUpdates()" style="background:#3a1a1a; color:#ff8888;">🗑️ HAPUS SEMUA UPDATE</button>
+  
+  <div id="updatesAdminList" style="text-align:left;margin-top:14px;">
+    <div style="color:#8d91a2;text-align:center;padding:20px;">Klik "Refresh Daftar" untuk memuat data.</div>
+  </div>
+</div>
+
+  <!-- ========================================== -->
   <!-- TAB: EMERGENCY -->
   <!-- ========================================== -->
   <div class="tab-content" id="tab-emergency">
@@ -506,6 +543,10 @@ button:active { transform: scale(.98); }
   <button class="nav-item" data-tab="feedback" onclick="switchTab('feedback', this)">
   <div class="nav-icon">📝</div>
   <div class="nav-label">Feedback</div>
+  </button>
+  <button class="nav-item" data-tab="updates" onclick="switchTab('updates', this)">
+  <div class="nav-icon">🆕</div>
+  <div class="nav-label">Update</div>
   </button>
   <button class="nav-item" data-tab="emergency" onclick="switchTab('emergency', this)">
     <div class="nav-icon">🚨</div>
@@ -1218,6 +1259,106 @@ async function hapusSemuaFeedback() {
     }
   } catch (err) {}
   }
+
+  // ==========================================
+// UPDATE INFO ADMIN
+// ==========================================
+const UPDATES_API = API_BASE + '/api/updates';
+
+async function simpanUpdate() {
+  const key1 = $('key1').value.trim();
+  const key2 = $('key2').value.trim();
+  const title = $('updateTitle').value.trim();
+  const content = $('updateContent').value.trim();
+
+  if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
+  if (!title || !content) return showStatus('⚠️ Judul dan isi wajib diisi!', 'error');
+
+  showStatus('⏳ Menyimpan update...', 'warn');
+
+  try {
+    const res = await fetch(
+      UPDATES_API + '?action=add' +
+      '&title=' + encodeURIComponent(title) +
+      '&content=' + encodeURIComponent(content) +
+      '&key1=' + encodeURIComponent(key1) +
+      '&key2=' + encodeURIComponent(key2),
+      { cache: 'no-store' }
+    );
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showStatus('✅ ' + data.message, 'off');
+      $('updateTitle').value = '';
+      $('updateContent').value = '';
+      loadUpdatesAdmin();
+    } else {
+      showStatus('❌ ' + (data.error || 'Gagal'), 'error');
+    }
+  } catch (err) {
+    showStatus('❌ Error: ' + err.message, 'error');
+  }
+}
+
+async function loadUpdatesAdmin() {
+  const key1 = $('key1').value.trim();
+  const key2 = $('key2').value.trim();
+  if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
+
+  const box = $('updatesAdminList');
+  box.innerHTML = '<div style="color:#8d91a2;text-align:center;padding:20px;">⏳ Memuat...</div>';
+
+  try {
+    const res = await fetch(UPDATES_API, { cache: 'no-store' });
+    const data = await res.json();
+    const updates = data.updates || [];
+
+    if (updates.length === 0) {
+      box.innerHTML = '<div style="color:#5a5f70;text-align:center;padding:20px;">📭 Belum ada update.</div>';
+      return;
+    }
+
+    let html = '';
+    updates.forEach(item => {
+      const date = new Date(item.time);
+      const timeStr = date.toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+      html += `
+        <div class="update-admin-item">
+          <div class="update-admin-title">${item.title}</div>
+          <div class="update-admin-time">🕒 ${timeStr}</div>
+          <div class="update-admin-content">${item.content}</div>
+        </div>
+      `;
+    });
+    box.innerHTML = html;
+    showStatus('✅ ' + updates.length + ' update dimuat', 'off');
+  } catch (err) {
+    box.innerHTML = '<div style="color:#ff8888;text-align:center;padding:20px;">❌ Error: ' + err.message + '</div>';
+  }
+}
+
+async function hapusSemuaUpdates() {
+  if (!confirm('🗑️ Hapus semua update?')) return;
+  const key1 = $('key1').value.trim();
+  const key2 = $('key2').value.trim();
+  if (!key1 || !key2) return showStatus('⚠️ Isi kedua kunci dulu!', 'error');
+
+  try {
+    const res = await fetch(
+      UPDATES_API + '?action=clear' +
+      '&key1=' + encodeURIComponent(key1) +
+      '&key2=' + encodeURIComponent(key2),
+      { cache: 'no-store' }
+    );
+    if (res.ok) {
+      showStatus('✅ Semua update dihapus', 'off');
+      loadUpdatesAdmin();
+    }
+  } catch (err) {}
+}
+
+// Auto-load saat tab update dibuka
+// Tambahkan di switchTab():
+// if (tabName === 'updates') loadUpdatesAdmin();
 
 // ==========================================
 // PAKAI APLIKASI

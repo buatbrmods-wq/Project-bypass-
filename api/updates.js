@@ -22,6 +22,7 @@ export default async (request, env, ctx) => {
   const action = url.searchParams.get('action');
   const title = url.searchParams.get('title');
   const content = url.searchParams.get('content');
+  const version = url.searchParams.get('version'); // <-- Tambahan
   const key1 = url.searchParams.get('key1');
   const key2 = url.searchParams.get('key2');
 
@@ -53,14 +54,14 @@ export default async (request, env, ctx) => {
       const newUpdate = {
         id: String(Date.now()),
         time: new Date().toISOString(),
+        version: version || 'v1.0.0', // <-- Tambahan
         title: title,
         content: content
       };
 
       await redis.lpush('app_updates', JSON.stringify(newUpdate));
-      await redis.ltrim('app_updates', 0, 19); // Maksimal 20 update
+      await redis.ltrim('app_updates', 0, 19);
 
-      // Simpan flag "ada update baru" agar notif muncul
       await redis.set('update_notif_flag', String(Date.now()));
 
       return new Response(JSON.stringify({ success: true, message: 'Update berhasil ditambahkan' }), { status: 200, headers: cors });

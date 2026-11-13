@@ -3,7 +3,7 @@
 
 import { Redis } from '@upstash/redis/cloudflare';
 
-const VALID_SERVICES = ['adlink', 'sfl', 'delta', 'linkvertise', 'sub2unlock', 'sub4unlock', 'universal'];
+const VALID_SERVICES = ['adlink', 'sfl', 'delta', 'linkvertise', 'bicolink', 'sub2unlock', 'sub4unlock', 'universal'];
 
 export default async (request, env, ctx) => {
   // Setup CORS

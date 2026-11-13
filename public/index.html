@@ -1722,7 +1722,21 @@ function switchPage(pageName, el) {
   if (el) el.classList.add('active');
 
   // info update
-  if (pageName === 'update') loadUpdates();
+  if (pageName === 'update') {
+    loadUpdates();
+    
+    // Sembunyikan titik merah saat halaman update dibuka
+    const notifMenu = document.getElementById('notifDotMenu');
+    const notifDrawer = document.getElementById('notifDotDrawer');
+    if (notifMenu) notifMenu.style.display = 'none';
+    if (notifDrawer) notifDrawer.style.display = 'none';
+    
+    // Tandai bahwa user sudah melihat update terbaru
+    // (Ambil ID dari update terbaru yang tadi disimpan)
+    // Catatan: Fungsi loadUpdates() akan memproses ini, kita cukup sembunyikan visualnya dulu.
+  }
+  
+}
 
   // Auto-load
   if (pageName === 'history' && typeof renderHistory === 'function') renderHistory();
@@ -1975,7 +1989,7 @@ async function loadUpdates() {
 // if (pageName === 'update') loadUpdates();
 
 // ==========================================
-// NOTIFIKASI UPDATE BARU & SINKRONISASI VERSI DRAWER
+// NOTIFIKASI UPDATE BARU & TITIK MERAH
 // ==========================================
 async function cekUpdateBaru() {
   try {
@@ -1985,33 +1999,37 @@ async function cekUpdateBaru() {
 
     if (updates.length === 0) return;
 
-    // Ambil update terbaru (paling atas)
+    // Ambil update terbaru
     const latestUpdate = updates[0];
     
-    // ==========================================
-    // 1. UBAH VERSI DI MENU HAMBURGER (DRAWER)
-    // ==========================================
+    // Ubah versi di Drawer
     const drawerVersionEl = document.getElementById('drawerVersion');
     if (drawerVersionEl && latestUpdate.version) {
       drawerVersionEl.textContent = latestUpdate.version;
     }
 
-    // ==========================================
-    // 2. TAMPILKAN NOTIF TOAST JIKA BELUM DILIHAT
-    // ==========================================
     const lastSeenId = localStorage.getItem('sd_last_update_seen');
+    const notifMenu = document.getElementById('notifDotMenu');
+    const notifDrawer = document.getElementById('notifDotDrawer');
 
+    // Jika update terbaru BELUM dilihat
     if (latestUpdate.id !== lastSeenId) {
-      // Tampilkan Notif Toast
+      // Tampilkan Titik Merah
+      if (notifMenu) notifMenu.style.display = 'block';
+      if (notifDrawer) notifDrawer.style.display = 'block';
+
+      // Tampilkan Toast (opsional, bisa dihapus jika terlalu berisik)
       toast(`🆕 Update Baru (${latestUpdate.version || 'v1.0.0'}): ${latestUpdate.title}`);
       
-      // Simpan ID agar tidak muncul terus-terusan
-      localStorage.setItem('sd_last_update_seen', latestUpdate.id);
+    } else {
+      // Jika sudah dilihat, sembunyikan titik merah
+      if (notifMenu) notifMenu.style.display = 'none';
+      if (notifDrawer) notifDrawer.style.display = 'none';
     }
   } catch (err) {}
 }
 
-// Panggil saat web dibuka (setelah 3 detik)
+// Panggil saat web dibuka
 setTimeout(cekUpdateBaru, 3000);
 
   
@@ -2060,6 +2078,7 @@ setTimeout(cekUpdateBaru, 3000);
     <b>Info Update</b>
     <small>Berita & pembaruan terbaru</small>
   </div>
+  <div class="notif-dot-drawer" id="notifDotDrawer"></div>
   <div class="drawer-arrow">›</div>
     </div>
 

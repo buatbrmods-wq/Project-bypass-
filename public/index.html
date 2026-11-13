@@ -1948,8 +1948,8 @@ async function loadUpdates() {
 // Cari fungsi switchPage() dan tambahkan pemanggilan ini di dalamnya:
 // if (pageName === 'update') loadUpdates();
 
-  // ==========================================
-// NOTIFIKASI UPDATE BARU
+// ==========================================
+// NOTIFIKASI UPDATE BARU & SINKRONISASI VERSI DRAWER
 // ==========================================
 async function cekUpdateBaru() {
   try {
@@ -1962,7 +1962,17 @@ async function cekUpdateBaru() {
     // Ambil update terbaru (paling atas)
     const latestUpdate = updates[0];
     
-    // Cek apakah user sudah pernah lihat update ini
+    // ==========================================
+    // 1. UBAH VERSI DI MENU HAMBURGER (DRAWER)
+    // ==========================================
+    const drawerVersionEl = document.getElementById('drawerVersion');
+    if (drawerVersionEl && latestUpdate.version) {
+      drawerVersionEl.textContent = latestUpdate.version;
+    }
+
+    // ==========================================
+    // 2. TAMPILKAN NOTIF TOAST JIKA BELUM DILIHAT
+    // ==========================================
     const lastSeenId = localStorage.getItem('sd_last_update_seen');
 
     if (latestUpdate.id !== lastSeenId) {
@@ -1975,7 +1985,7 @@ async function cekUpdateBaru() {
   } catch (err) {}
 }
 
-// Panggil saat web dibuka (setelah 3 detik agar tidak mengganggu loading)
+// Panggil saat web dibuka (setelah 3 detik)
 setTimeout(cekUpdateBaru, 3000);
 
   
@@ -1986,8 +1996,8 @@ setTimeout(cekUpdateBaru, 3000);
 <!-- DRAWER MENU -->
 <div class="drawer" id="drawer">
   <div class="drawer-header">
-    <h2>Menu</h2>
-    <p>Bypass Web • v1.0.0</p>
+  <h2>Menu</h2>
+  <p>Bypass Web • v<span id="drawerVersion">1.0.0</span></p>
   </div>
 
   <div class="drawer-menu">

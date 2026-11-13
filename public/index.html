@@ -802,6 +802,17 @@ body.has-broadcast{padding-top:60px}
   </div>
 </div>
 <!-- END TAB FEEDBACK -->
+
+  <!-- TAB: UPDATE INFO -->
+<div class="tab-page" id="page-update">
+  <h2 style="font-size:22px;font-weight:800;margin-bottom:6px;">🆕 Info Update</h2>
+  <p style="color:#8d91a2;font-size:13px;margin-bottom:20px;">Pembaruan terbaru dari admin</p>
+  
+  <div id="updateList">
+    <div style="text-align:center;padding:40px 20px;color:#5a5f70;font-size:13px;">⏳ Memuat update...</div>
+  </div>
+</div>
+<!-- END TAB UPDATE -->
 </main>
 
 <div class="modal" id="modal">
@@ -1692,6 +1703,9 @@ function switchPage(pageName, el) {
   document.querySelectorAll('.drawer-item').forEach(i => i.classList.remove('active'));
   if (el) el.classList.add('active');
 
+  // info update
+  if (pageName === 'update') loadUpdates();
+
   // Auto-load
   if (pageName === 'history' && typeof renderHistory === 'function') renderHistory();
   if (pageName === 'info' && typeof loadInfoPage === 'function') loadInfoPage();
@@ -1896,6 +1910,50 @@ async function kirimFeedback() {
   }
 }
 
+  // ==========================================
+// INFO UPDATE
+// ==========================================
+const UPDATES_API = VERCEL_BASE + '/api/updates';
+
+async function loadUpdates() {
+  const list = document.getElementById('updateList');
+  if (!list) return;
+
+  try {
+    const res = await fetch(UPDATES_API, { cache: 'no-store' });
+    const data = await res.json();
+    const updates = data.updates || [];
+
+    if (updates.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#5a5f70;font-size:13px;">📭 Belum ada update.</div>';
+      return;
+    }
+
+    let html = '';
+    updates.forEach(item => {
+      const date = new Date(item.time);
+      const timeStr = date.toLocaleString('id-ID', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+      html += `
+        <div class="info-box" style="margin-bottom:12px;">
+          <h3 style="color:#b45cff; font-size:16px; margin-bottom:6px;">${item.title}</h3>
+          <div class="content" style="font-size:13px; color:#d0d3dd; white-space:pre-wrap; margin-bottom:10px;">${item.content}</div>
+          <div style="font-size:11px; color:#5a5f70; text-align:right;">🕒 ${timeStr}</div>
+        </div>
+      `;
+    });
+    list.innerHTML = html;
+  } catch (err) {
+    list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#ff8888;font-size:13px;">❌ Gagal memuat update.</div>';
+  }
+}
+
+// Panggil fungsi ini saat halaman update dibuka
+// Cari fungsi switchPage() dan tambahkan pemanggilan ini di dalamnya:
+// if (pageName === 'update') loadUpdates();
+
   
 </script>
   <!-- DRAWER OVERLAY -->
@@ -1932,6 +1990,15 @@ async function kirimFeedback() {
   <div class="drawer-text">
     <b>Feedback / Saran</b>
     <small>Kirim masukan untuk admin</small>
+  </div>
+  <div class="drawer-arrow">›</div>
+    </div>
+
+    <div class="drawer-item" onclick="switchPage('update', this)">
+  <div class="drawer-icon">🆕</div>
+  <div class="drawer-text">
+    <b>Info Update</b>
+    <small>Berita & pembaruan terbaru</small>
   </div>
   <div class="drawer-arrow">›</div>
     </div>
